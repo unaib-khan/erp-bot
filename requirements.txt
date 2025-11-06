@@ -9,3 +9,4 @@ streamlit==1.40.2
 PyPDF2==2.12.1
 python-dotenv==1.0.1 
 langchain-community==0.3.16
+langchain-experimental==0.3.4
