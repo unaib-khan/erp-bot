@@ -306,78 +306,82 @@ def main():
             return_messages=True
         )
 
-    # === ✂️ HIDE Sidebar UI ===
-    # uploaded_files = st.sidebar.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
-    # tag = st.sidebar.text_input("Enter a tag:")
-    # enable_ocr = st.sidebar.checkbox("Enable OCR")
-    # ocr_tool = st.sidebar.radio("Choose OCR Tool", ["fitz", "pdfplumber"])
-    # model_choice = st.sidebar.selectbox("Choose LLM Model", ["Gemini", "Mistral"])
-    # process_button = st.sidebar.button("Process Files")
+    # --- Sidebar UI ---
+    uploaded_files = st.sidebar.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
+    tag = st.sidebar.text_input("Enter a tag:")
+    enable_ocr = st.sidebar.checkbox("Enable OCR")
+    ocr_tool = st.sidebar.radio("Choose OCR Tool", ["fitz", "pdfplumber"])
+    model_choice = st.sidebar.selectbox("Choose LLM Model", ["Gemini", "Mistral"])
+    process_button = st.sidebar.button("Process Files")
 
-    # === ✂️ HIDE File processing logic ===
-    # if process_button and uploaded_files and tag:
-    #     with st.spinner("Processing files..."):
-    #         with ThreadPoolExecutor() as executor:
-    #             for uploaded_file in uploaded_files:
-    #                 result = executor.submit(process_pdf, uploaded_file, tag, enable_ocr, ocr_tool).result()
-    #                 if result:
-    #                     st.success(f"✅ Processed: {uploaded_file.name}")
-    #                 else:
-    #                     st.error(f"❌ Failed to process: {uploaded_file.name}")
+    # --- File processing ---
+    if process_button and uploaded_files and tag:
+        with st.spinner("Processing files..."):
+            with ThreadPoolExecutor() as executor:
+                for uploaded_file in uploaded_files:
+                    result = executor.submit(process_pdf, uploaded_file, tag, enable_ocr, ocr_tool).result()
+                    if result:
+                        st.success(f"✅ Processed: {uploaded_file.name}")
+                    else:
+                        st.error(f"❌ Failed to process: {uploaded_file.name}")
 
-    # === ✂️ HIDE processed files UI ===
-    # if processed_files:
-    #     display_tags_with_delete()
-    #     
-    #     tag_list = list(set(metadata.get("tag", "Untitled") for metadata in processed_files.values()))
-    #     tag_choice = st.selectbox("Select a Tag to View Training Data", tag_list)
+    # --- Show processed files ---
+    if processed_files:
+        display_tags_with_delete()
+        
+        tag_list = list(set(metadata.get("tag", "Untitled") for metadata in processed_files.values()))
+        tag_choice = st.selectbox("Select a Tag to View Training Data", tag_list)
 
-    #     if tag_choice:
-    #         display_files_with_delete(tag_choice)
-    #         file_choice = st.selectbox(
-    #             "Select a Training Data File to Ask a Question",
-    #             [f["name"] for f in processed_files.values() if f.get("tag") == tag_choice]
-    #         )
+        if tag_choice:
+            display_files_with_delete(tag_choice)
+            file_choice = st.selectbox(
+                "Select a Training Data File to Ask a Question",
+                [f["name"] for f in processed_files.values() if f.get("tag") == tag_choice]
+            )
 
-    #         if file_choice:
-    #             selected_file = next(f for f in processed_files.values() if f["name"] == file_choice)
-    
-    # ✅ Instead, use one fixed vector store or default file for chat
-    model_choice = "Gemini"  # or load dynamically
-    vector_store_path = "vector_store/default_index"  # path to your FAISS store
-    context = "ERP Knowledge Base"
+            # --- File selected ---
+            if file_choice:
+                selected_file = next(f for f in processed_files.values() if f["name"] == file_choice)
 
-    # --- Chat input ---
-    user_input = st.chat_input("💬 Ask about the ERP system...")
+                # --- Chat input ---
+                user_input = st.chat_input("💬 Ask about the ERP system...")
 
-    if user_input:
-        # --- Show past messages ---
-        for msg in st.session_state.chat_memory.chat_memory.messages:
-            with st.chat_message("user" if msg.type == "human" else "assistant"):
-                st.markdown(msg.content)
+                if user_input:
+                    # --- Show past messages ---
+                    for msg in st.session_state.chat_memory.chat_memory.messages:
+                        with st.chat_message("user" if msg.type == "human" else "assistant"):
+                            st.markdown(msg.content)
+                    # --- Handle user input ---
+                    if prompt := user_input.strip():
+                        # Show user message instantly
+                        with st.chat_message("user"):
+                            st.markdown(prompt)
 
-        # --- Handle user input ---
-        if prompt := user_input.strip():
-            with st.chat_message("user"):
-                st.markdown(prompt)
+                    # Generate response
+                    response = ask_question_with_model(
+                        user_input,
+                        selected_file["text"],
+                        model_choice,
+                        selected_file["vector_store_path"],
+                        st.session_state.chat_memory
+                    )
+                        # Show assistant message
+                    with st.chat_message("assistant"):
+                        st.markdown(response)
 
-        # --- Generate response ---
-        response = ask_question_with_model(
-            user_input,
-            context,
-            model_choice,
-            vector_store_path,
-            st.session_state.chat_memory
-        )
+                    # Append to memory ONLY ONCE
+                    # st.session_state.chat_memory.chat_memory.add_user_message(user_input)
+                    # st.session_state.chat_memory.chat_memory.add_ai_message(response)
+                    with open("debug_chat_memory.json", "w") as f:
+                        json.dump([msg.dict() for msg in st.session_state.chat_memory.chat_memory.messages], f, indent=4)
 
-        # --- Show assistant message ---
-        with st.chat_message("assistant"):
-            st.markdown(response)
-
-        # --- Save chat memory for debugging ---
-        with open("debug_chat_memory.json", "w") as f:
-            json.dump([msg.dict() for msg in st.session_state.chat_memory.chat_memory.messages], f, indent=4)
+                # # ✅ Always display chat history (outside the if block)
+                # st.markdown("### 💬 Chat History")
+                # for msg in st.session_state.chat_memory.chat_memory.messages:
+                #     if msg.type == "human":
+                #         st.markdown(f"**🧑 You:** {msg.content}")
+                #     else:
+                #         st.markdown(f"**🤖 ERP Assistant:** {msg.content}")
 
 if __name__ == "__main__":
     main()
-
