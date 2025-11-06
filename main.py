@@ -294,11 +294,107 @@ Chat History:
 # ==========================
 # Streamlit Application
 # ==========================
+# def main():
+#     st.set_page_config(page_title="RAG Application")
+#     st.header("📘 ERP Chatbot")
+
+#     # ✅ 1️⃣ Initialize chat memory ONCE
+#     if "chat_memory" not in st.session_state:
+#         st.session_state.chat_memory = ConversationBufferMemory(
+#             memory_key="chat_history",
+#             input_key="question",
+#             return_messages=True
+#         )
+
+#     # --- Sidebar UI ---
+#     uploaded_files = st.sidebar.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
+#     tag = st.sidebar.text_input("Enter a tag:")
+#     enable_ocr = st.sidebar.checkbox("Enable OCR")
+#     ocr_tool = st.sidebar.radio("Choose OCR Tool", ["fitz", "pdfplumber"])
+#     model_choice = st.sidebar.selectbox("Choose LLM Model", ["Gemini", "Mistral"])
+#     process_button = st.sidebar.button("Process Files")
+
+#     # --- File processing ---
+#     if process_button and uploaded_files and tag:
+#         with st.spinner("Processing files..."):
+#             with ThreadPoolExecutor() as executor:
+#                 for uploaded_file in uploaded_files:
+#                     result = executor.submit(process_pdf, uploaded_file, tag, enable_ocr, ocr_tool).result()
+#                     if result:
+#                         st.success(f"✅ Processed: {uploaded_file.name}")
+#                     else:
+#                         st.error(f"❌ Failed to process: {uploaded_file.name}")
+
+#     # --- Show processed files ---
+#     if processed_files:
+#         display_tags_with_delete()
+        
+#         tag_list = list(set(metadata.get("tag", "Untitled") for metadata in processed_files.values()))
+#         tag_choice = st.selectbox("Select a Tag to View Training Data", tag_list)
+
+#         if tag_choice:
+#             display_files_with_delete(tag_choice)
+#             file_choice = st.selectbox(
+#                 "Select a Training Data File to Ask a Question",
+#                 [f["name"] for f in processed_files.values() if f.get("tag") == tag_choice]
+#             )
+
+#             # --- File selected ---
+#             if file_choice:
+#                 selected_file = next(f for f in processed_files.values() if f["name"] == file_choice)
+
+#                 # --- Chat input ---
+#                 user_input = st.chat_input("💬 Ask about the ERP system...")
+
+#                 if user_input:
+#                     # --- Show past messages ---
+#                     for msg in st.session_state.chat_memory.chat_memory.messages:
+#                         with st.chat_message("user" if msg.type == "human" else "assistant"):
+#                             st.markdown(msg.content)
+#                     # --- Handle user input ---
+#                     if prompt := user_input.strip():
+#                         # Show user message instantly
+#                         with st.chat_message("user"):
+#                             st.markdown(prompt)
+
+#                     # Generate response
+#                     response = ask_question_with_model(
+#                         user_input,
+#                         selected_file["text"],
+#                         model_choice,
+#                         selected_file["vector_store_path"],
+#                         st.session_state.chat_memory
+#                     )
+#                         # Show assistant message
+#                     with st.chat_message("assistant"):
+#                         st.markdown(response)
+
+#                     # Append to memory ONLY ONCE
+#                     # st.session_state.chat_memory.chat_memory.add_user_message(user_input)
+#                     # st.session_state.chat_memory.chat_memory.add_ai_message(response)
+#                     with open("debug_chat_memory.json", "w") as f:
+#                         json.dump([msg.dict() for msg in st.session_state.chat_memory.chat_memory.messages], f, indent=4)
+
+#                 # # ✅ Always display chat history (outside the if block)
+#                 # st.markdown("### 💬 Chat History")
+#                 # for msg in st.session_state.chat_memory.chat_memory.messages:
+#                 #     if msg.type == "human":
+#                 #         st.markdown(f"**🧑 You:** {msg.content}")
+#                 #     else:
+#                 #         st.markdown(f"**🤖 ERP Assistant:** {msg.content}")
+
+# if __name__ == "__main__":
+#     main()
+import streamlit as st
+import json
+from concurrent.futures import ThreadPoolExecutor
+from langchain.memory import ConversationBufferMemory
+
 def main():
     st.set_page_config(page_title="RAG Application")
     st.header("📘 ERP Chatbot")
 
-    # ✅ 1️⃣ Initialize chat memory ONCE
+    # ✅ Initialize chat memory once
     if "chat_memory" not in st.session_state:
         st.session_state.chat_memory = ConversationBufferMemory(
             memory_key="chat_history",
@@ -306,36 +402,62 @@ def main():
             return_messages=True
         )
 
-    # --- Sidebar UI ---
-    uploaded_files = st.sidebar.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
-    tag = st.sidebar.text_input("Enter a tag:")
-    enable_ocr = st.sidebar.checkbox("Enable OCR")
-    ocr_tool = st.sidebar.radio("Choose OCR Tool", ["fitz", "pdfplumber"])
-    model_choice = st.sidebar.selectbox("Choose LLM Model", ["Gemini", "Mistral"])
-    process_button = st.sidebar.button("Process Files")
+    # --- Sidebar UI (renamed to sound advanced) ---
+    st.sidebar.title("🧠 GenAI Core Configuration")
+
+    uploaded_files = st.sidebar.file_uploader(
+        "📂 Inject Cognitive Data Modules",  # instead of “Upload PDFs”
+        type=["pdf"],
+        accept_multiple_files=True
+    )
+
+    tag = st.sidebar.text_input(
+        "🔖 Define Contextual Memory ID",  # instead of “Enter a tag”
+        placeholder="e.g., ERP_Core_Set_01"
+    )
+
+    enable_ocr = st.sidebar.checkbox(
+        "🧩 Activate Synthetic Vision (OCR Mode)"  # instead of “Enable OCR”
+    )
+
+    ocr_tool = st.sidebar.radio(
+        "🔬 Select Vision Engine Protocol",  # instead of “Choose OCR Tool”
+        ["fitz", "pdfplumber"]
+    )
+
+    model_choice = st.sidebar.selectbox(
+        "⚙️ Neural Reasoning Model Selector",  # instead of “Choose LLM Model”
+        ["Gemini", "Mistral"]
+    )
+
+    process_button = st.sidebar.button(
+        "🚀 Initialize Knowledge Embedding Sequence"  # instead of “Process Files”
+    )
 
     # --- File processing ---
     if process_button and uploaded_files and tag:
-        with st.spinner("Processing files..."):
+        with st.spinner("🧠 Engaging cognitive embedding pipeline..."):
             with ThreadPoolExecutor() as executor:
                 for uploaded_file in uploaded_files:
-                    result = executor.submit(process_pdf, uploaded_file, tag, enable_ocr, ocr_tool).result()
+                    result = executor.submit(
+                        process_pdf, uploaded_file, tag, enable_ocr, ocr_tool
+                    ).result()
                     if result:
-                        st.success(f"✅ Processed: {uploaded_file.name}")
+                        st.success(f"✅ Indexed Knowledge Module: {uploaded_file.name}")
                     else:
-                        st.error(f"❌ Failed to process: {uploaded_file.name}")
+                        st.error(f"❌ Failed to index: {uploaded_file.name}")
 
-    # --- Show processed files ---
+    # --- Show processed files (unchanged logic) ---
     if processed_files:
         display_tags_with_delete()
-        
+
         tag_list = list(set(metadata.get("tag", "Untitled") for metadata in processed_files.values()))
-        tag_choice = st.selectbox("Select a Tag to View Training Data", tag_list)
+        tag_choice = st.selectbox("📂 Select Context Memory Node", tag_list)
 
         if tag_choice:
             display_files_with_delete(tag_choice)
             file_choice = st.selectbox(
-                "Select a Training Data File to Ask a Question",
+                "🧾 Select Embedded Knowledge Unit",
                 [f["name"] for f in processed_files.values() if f.get("tag") == tag_choice]
             )
 
@@ -344,20 +466,20 @@ def main():
                 selected_file = next(f for f in processed_files.values() if f["name"] == file_choice)
 
                 # --- Chat input ---
-                user_input = st.chat_input("💬 Ask about the ERP system...")
+                user_input = st.chat_input("💬 Query the ERP Intelligence System...")
 
                 if user_input:
                     # --- Show past messages ---
                     for msg in st.session_state.chat_memory.chat_memory.messages:
                         with st.chat_message("user" if msg.type == "human" else "assistant"):
                             st.markdown(msg.content)
+
                     # --- Handle user input ---
                     if prompt := user_input.strip():
-                        # Show user message instantly
                         with st.chat_message("user"):
                             st.markdown(prompt)
 
-                    # Generate response
+                    # --- Generate response ---
                     response = ask_question_with_model(
                         user_input,
                         selected_file["text"],
@@ -365,23 +487,17 @@ def main():
                         selected_file["vector_store_path"],
                         st.session_state.chat_memory
                     )
-                        # Show assistant message
+
                     with st.chat_message("assistant"):
                         st.markdown(response)
 
-                    # Append to memory ONLY ONCE
-                    # st.session_state.chat_memory.chat_memory.add_user_message(user_input)
-                    # st.session_state.chat_memory.chat_memory.add_ai_message(response)
+                    # --- Save chat logs ---
                     with open("debug_chat_memory.json", "w") as f:
-                        json.dump([msg.dict() for msg in st.session_state.chat_memory.chat_memory.messages], f, indent=4)
-
-                # # ✅ Always display chat history (outside the if block)
-                # st.markdown("### 💬 Chat History")
-                # for msg in st.session_state.chat_memory.chat_memory.messages:
-                #     if msg.type == "human":
-                #         st.markdown(f"**🧑 You:** {msg.content}")
-                #     else:
-                #         st.markdown(f"**🤖 ERP Assistant:** {msg.content}")
+                        json.dump(
+                            [msg.dict() for msg in st.session_state.chat_memory.chat_memory.messages],
+                            f,
+                            indent=4
+                        )
 
 if __name__ == "__main__":
     main()
