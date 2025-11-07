@@ -20,6 +20,7 @@ import google.generativeai as genai
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import LLMChain
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 
 # ==========================
@@ -502,4 +503,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
