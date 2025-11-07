@@ -125,7 +125,7 @@ def process_pdf(uploaded_file, tag, enable_ocr, ocr_tool):
     # text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
     chunks = text_splitter.split_text(text)
 
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    # embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     vector_store = FAISS.from_texts(chunks, embedding=embeddings)
     vector_store_path = os.path.join(VECTOR_STORE_FOLDER, f"{file_hash}.faiss")
     vector_store.save_local(vector_store_path)
@@ -503,5 +503,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
