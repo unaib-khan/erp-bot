@@ -109,7 +109,8 @@ def process_pdf(uploaded_file, tag, enable_ocr, ocr_tool):
     text = extract_text_from_pdf(file_path, enable_ocr=enable_ocr, ocr_tool=ocr_tool)
     CHUNKING_STRATEGY = "semantic"
     if CHUNKING_STRATEGY == "semantic":
-        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        # embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         text_splitter = SemanticChunker(
         embeddings,
         breakpoint_threshold_type="percentile",   # could also use "standard_deviation"
@@ -176,7 +177,7 @@ def display_files_with_delete(selected_tag):
 
 
 def ask_question_with_model(question, context, model_choice, vector_store_path, memory, capabilities="Leave Management, Attendance, Payroll, Performance,Recruitment Workflow System (RWS) Functional & Technical Specification"):
-    vector_store = FAISS.load_local(vector_store_path, GoogleGenerativeAIEmbeddings(model="models/embedding-001"), allow_dangerous_deserialization=True)
+    vector_store = FAISS.load_local(vector_store_path, HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2"), allow_dangerous_deserialization=True)
     docs = vector_store.similarity_search(question,k=8)
     combined_context = "\n\n".join([d.page_content for d in docs])
     show_greeting = len(memory.chat_memory.messages) == 0
@@ -501,3 +502,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
